@@ -8,13 +8,14 @@ import qs.Modules.Lock
 import qs.Modules.Sidebars.Left
 import qs.Modules.Sidebars.Right
 import qs.Modules.Wallpaper
+import qs.Services
 
 Item {
     id: root
 
-    WallpaperBackground {}
+    Component.onCompleted: WallpaperService.primaryInstance = true
 
-    OverviewWallpaperBackground {}
+    WallpaperBackground {}
 
     Bar {}
 
@@ -52,6 +53,34 @@ Item {
         function toggle() {
             rofiLauncher.toggleWindow();
             return "LAUNCHER_TOGGLED";
+        }
+    }
+
+    IpcHandler {
+        target: "wallpaper"
+
+        function set(path, screenName) {
+            return WallpaperService.setWallpaper(path || "", screenName || "", true) ? "OK" : "PENDING";
+        }
+
+        function clear(screenName) {
+            return WallpaperService.clearWallpaper(screenName || "", true) ? "OK" : "PENDING";
+        }
+
+        function previous() {
+            return WallpaperService.cyclePrevious(true) ? "OK" : "PENDING";
+        }
+
+        function next() {
+            return WallpaperService.cycleNext(true) ? "OK" : "PENDING";
+        }
+
+        function random() {
+            return WallpaperService.cycleRandom(true) ? "OK" : "PENDING";
+        }
+
+        function setFolder(path) {
+            return WallpaperService.setWallpaperFolder(path || "", true) ? "OK" : "PENDING";
         }
     }
 }
