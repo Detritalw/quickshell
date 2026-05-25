@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Wayland
 import qs.Common
 import qs.Components
 import qs.Widgets.common
 
-Popup {
+Item {
     id: root
 
     property color currentColor: Appearance.colors.colPrimary
@@ -62,23 +64,72 @@ Popup {
         recentColors = next;
     }
 
-    width: 680
-    height: Math.min(680, parent ? parent.height - 48 : 680)
-    modal: true
-    focus: true
-    padding: 0
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    property bool shouldBeVisible: false
+    readonly property real dialogWidth: Math.max(560, Math.min(680, modalWindow.width - 64))
+    readonly property real dialogHeight: Math.min(680, Math.max(420, modalWindow.height - 64))
 
-    background: Rectangle {
-        radius: Appearance.rounding.normal
-        color: Appearance.m3colors.m3surfaceContainerLow
-        border.width: 1
-        border.color: Appearance.m3colors.m3outlineVariant
+    function open() {
+        shouldBeVisible = true;
+        Qt.callLater(() => modalContent.forceActiveFocus());
     }
 
-    contentItem: FocusScope {
-        anchors.fill: parent
-        focus: true
+    function close() {
+        shouldBeVisible = false;
+    }
+
+    PanelWindow {
+        id: modalWindow
+
+        visible: root.shouldBeVisible
+        color: "transparent"
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "clavis-wallpaper-color-picker"
+        WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        exclusiveZone: 0
+
+        onVisibleChanged: {
+            if (visible)
+                Qt.callLater(() => modalContent.forceActiveFocus());
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.shouldBeVisible
+            onClicked: root.close()
+        }
+
+    FocusScope {
+        id: modalContent
+
+        anchors.centerIn: parent
+        width: root.dialogWidth
+        height: root.dialogHeight
+        focus: root.shouldBeVisible
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Appearance.rounding.normal
+            color: Appearance.m3colors.m3surfaceContainerLow
+            border.width: 1
+            border.color: Appearance.m3colors.m3outlineVariant
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            z: -1
+            onPressed: mouse => mouse.accepted = true
+            onClicked: mouse => mouse.accepted = true
+        }
 
         Keys.onEscapePressed: event => {
             root.close();
@@ -407,6 +458,7 @@ Popup {
                 }
             }
         }
+    }
     }
 
     component IconButton: Item {

@@ -361,11 +361,9 @@ StyledFlickable {
                         visible: root.currentWallpaperPath === ""
                     }
 
-                    MouseArea {
+                    HoverHandler {
                         id: previewHover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        acceptedButtons: Qt.NoButton
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                     }
 
                     Rectangle {
@@ -373,7 +371,7 @@ StyledFlickable {
                         anchors.margins: 1
                         radius: Appearance.rounding.normal - 1
                         color: Qt.rgba(0, 0, 0, 0.7)
-                        opacity: previewHover.containsMouse ? 1 : 0
+                        opacity: previewHover.hovered ? 1 : 0
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -852,8 +850,6 @@ StyledFlickable {
 
     WallpaperFileBrowser {
         id: wallpaperFileBrowser
-        x: Math.max(0, (root.width - width) / 2)
-        y: Math.max(0, (root.height - height) / 2)
         startPath: PersonalizationConfig.wallpaperFolder
         onFolderSelected: path => {
             WallpaperService.setWallpaperFolder(path);
@@ -868,8 +864,6 @@ StyledFlickable {
 
     WallpaperColorPicker {
         id: wallpaperColorPicker
-        x: Math.max(0, (root.width - width) / 2)
-        y: Math.max(0, (root.height - height) / 2)
         onColorSelected: color => WallpaperService.setWallpaper(color)
     }
 }
