@@ -6,6 +6,8 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property var screen: null
+
     Item {
         anchors.fill: parent
         
@@ -39,6 +41,7 @@ Item {
 
         SettingsContent {
             anchors.fill: parent
+            screen: root.screen
 
             opacity: WidgetState.qsView === "settings" ? 1.0 : 0.0
             scale: WidgetState.qsView === "settings" ? 1.0 : 0.95

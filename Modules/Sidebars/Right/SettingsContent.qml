@@ -8,6 +8,7 @@ import qs.Widgets.common
 WidgetPanel {
     id: root
 
+    property var screen: null
     title: "快捷设置"
     icon: "settings"
     closeAction: () => WidgetState.qsOpen = false
@@ -226,6 +227,7 @@ WidgetPanel {
         spacing: 14
 
         QuickSliders {
+            screen: root.screen
             Layout.fillWidth: true
         }
 

@@ -4,6 +4,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Wayland
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 
 PanelWindow {
@@ -23,6 +24,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WidgetState.qsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
+    screen: Brightness.getScreenByName(WidgetState.qsScreenName) || Brightness.activeScreen || Quickshell.screens[0]
 
     anchors { right: true; top: true; bottom: true }
     margins { top: root.panelTopMargin }
@@ -129,6 +131,7 @@ PanelWindow {
         id: quickSettingsComponent
 
         QuickSettings {
+            screen: root.screen
             anchors.fill: parent
         }
     }

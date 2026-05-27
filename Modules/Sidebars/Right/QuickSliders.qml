@@ -9,6 +9,9 @@ Rectangle {
     id: root
 
     readonly property real gammaCutoff: 0.3
+    property var screen: null
+    readonly property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    readonly property real brightnessValue: brightnessMonitor ? brightnessMonitor.brightness : Brightness.brightnessValue
     property real verticalPadding: 4
     property real horizontalPadding: 12
 
@@ -33,19 +36,19 @@ Rectangle {
         QuickSlider {
             materialSymbol: "light_mode"
             secondaryMaterialSymbol: "wb_twilight"
-            stopIndicatorValues: Hyprsunset.gamma !== 100 && Brightness.brightnessValue > 0 ? [root.gammaCutoff + Brightness.brightnessValue * (1 - root.gammaCutoff)] : []
-            value: Hyprsunset.gamma === 100 ? root.gammaCutoff + Brightness.brightnessValue * (1 - root.gammaCutoff) : (Hyprsunset.gamma - Hyprsunset.gammaLowerLimit) / (100 - Hyprsunset.gammaLowerLimit) * root.gammaCutoff
-            percentText: Hyprsunset.gamma === 100 ? `${Math.round(Brightness.brightnessValue * 100)}%` : `${Hyprsunset.gamma}%`
-            tooltipContent: Hyprsunset.gamma === 100 ? `${Math.round(Brightness.brightnessValue * 100)}%` : `Gamma ${Hyprsunset.gamma}%`
+            stopIndicatorValues: Wlsunset.gamma !== 100 && root.brightnessValue > 0 ? [root.gammaCutoff + root.brightnessValue * (1 - root.gammaCutoff)] : []
+            value: Wlsunset.gamma === 100 ? root.gammaCutoff + root.brightnessValue * (1 - root.gammaCutoff) : (Wlsunset.gamma - Wlsunset.gammaLowerLimit) / (100 - Wlsunset.gammaLowerLimit) * root.gammaCutoff
+            percentText: Wlsunset.gamma === 100 ? `${Math.round(root.brightnessValue * 100)}%` : `${Wlsunset.gamma}%`
+            tooltipContent: Wlsunset.gamma === 100 ? `${Math.round(root.brightnessValue * 100)}%` : `Gamma ${Wlsunset.gamma}%`
             onMoved: {
                 if (value >= root.gammaCutoff) {
-                    Brightness.setBrightness((value - root.gammaCutoff) / (1 - root.gammaCutoff));
-                    if (Hyprsunset.gamma !== 100)
-                        Hyprsunset.setGamma(100);
+                    Brightness.setBrightnessForScreen(root.screen, (value - root.gammaCutoff) / (1 - root.gammaCutoff));
+                    if (Wlsunset.gamma !== 100)
+                        Wlsunset.setGamma(100);
                 } else {
-                    if (Brightness.brightnessValue > 0)
-                        Brightness.setBrightness(0, true);
-                    Hyprsunset.setGamma(value / root.gammaCutoff * (100 - Hyprsunset.gammaLowerLimit) + Hyprsunset.gammaLowerLimit);
+                    if (root.brightnessValue > 0)
+                        Brightness.setBrightnessForScreen(root.screen, 0, true);
+                    Wlsunset.setGamma(value / root.gammaCutoff * (100 - Wlsunset.gammaLowerLimit) + Wlsunset.gammaLowerLimit);
                 }
             }
         }
