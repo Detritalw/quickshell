@@ -17,6 +17,9 @@ Singleton {
     property var wifiConnectTarget: null
     property var wifiNetworks: []
     property var savedWifiConnections: []
+
+    property bool ethernetEnabled: false
+    property var ethernetDevices: []
     readonly property bool passwordPromptActive: wifiNetworks.some(network => network.askingPassword)
     readonly property var activeWifi: wifiNetworks.find(n => n.active) || null
     readonly property var friendlyWifiNetworks: wifiNetworks.slice().sort((a, b) => {
@@ -45,6 +48,20 @@ Singleton {
 
     function toggleWifi() {
         enableWifi(!wifiEnabled);
+    }
+
+    function toggleEthernet() {
+        if (root.ethernetDevices.length === 0)
+            return;
+        const dev = root.ethernetDevices[0];
+        if (root.ethernetEnabled)
+            ethernetDisconnectProc.exec(["nmcli", "device", "disconnect", dev.device]);
+        else
+            ethernetConnectProc.exec(["nmcli", "device", "connect", dev.device]);
+    }
+
+    function refreshEthernet() {
+        ethernetStatusProc.running = true;
     }
 
     function rescanWifi() {
@@ -416,13 +433,66 @@ Singleton {
     }
 
     Process {
+        id: ethernetStatusProc
+        command: ["bash", "-c", "nmcli -t -f DEVICE,TYPE,STATE device | grep ethernet"]
+        environment: ({
+            LANG: "C",
+            LC_ALL: "C"
+        })
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const rawText = text.trim();
+                if (rawText.length === 0) {
+                    root.ethernetDevices = [];
+                    root.ethernetEnabled = false;
+                    return;
+                }
+
+                const devices = rawText.split("\n").map(line => {
+                    const fields = line.split(":");
+                    return {
+                        device: fields[0] || "",
+                        type: fields[1] || "",
+                        state: fields[2] || ""
+                    };
+                }).filter(d => d.device.length > 0);
+
+                root.ethernetDevices = devices;
+                root.ethernetEnabled = devices.some(d => d.state === "connected");
+            }
+        }
+    }
+
+    Process {
+        id: ethernetConnectProc
+        onExited: {
+            root.refreshEthernet();
+            root.refresh();
+        }
+    }
+
+    Process {
+        id: ethernetDisconnectProc
+        onExited: {
+            root.refreshEthernet();
+            root.refresh();
+        }
+    }
+
+    Process {
         id: monitorProcess
         running: true
         command: ["nmcli", "monitor"]
         stdout: SplitParser {
-            onRead: root.refresh()
+            onRead: {
+                root.refresh();
+                root.refreshEthernet();
+            }
         }
     }
 
-    Component.onCompleted: root.refresh()
+    Component.onCompleted: {
+        root.refresh();
+        root.refreshEthernet();
+    }
 }

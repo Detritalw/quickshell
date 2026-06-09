@@ -71,6 +71,84 @@ WidgetPanel {
         Layout.fillHeight: true
         spacing: 6
 
+        // Ethernet section
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 56
+            radius: 10
+            color: Network.ethernetEnabled ? Appearance.colors.colLayer3 : "transparent"
+            border.width: 1
+            border.color: Network.ethernetEnabled ? "transparent" : Appearance.colors.colOutlineVariant
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 14
+                spacing: 12
+
+                Text {
+                    text: "lan"
+                    font.family: root.mdFont
+                    font.pixelSize: 24
+                    color: Network.ethernetEnabled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: 0
+
+                    Text {
+                        text: "有线网络"
+                        font.bold: true
+                        font.pixelSize: 14
+                        color: Network.ethernetEnabled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                    }
+
+                    Text {
+                        text: {
+                            if (Network.ethernetDevices.length === 0) return "未检测到网卡";
+                            if (Network.ethernetEnabled) return Network.activeConnection || "已连接";
+                            return "未连接";
+                        }
+                        font.pixelSize: 11
+                        color: Appearance.colors.colOnLayer1
+                        opacity: 0.7
+                    }
+                }
+
+                // Toggle switch
+                Rectangle {
+                    width: 44; height: 24; radius: 12
+                    visible: Network.ethernetDevices.length > 0
+                    color: Network.ethernetEnabled ? Appearance.colors.colPrimary : "transparent"
+                    border.width: Network.ethernetEnabled ? 0 : 2
+                    border.color: Appearance.colors.colOutline
+                    Behavior on color { ColorAnimation { duration: 250 } }
+
+                    Rectangle {
+                        width: Network.ethernetEnabled ? 16 : 12
+                        height: Network.ethernetEnabled ? 16 : 12
+                        radius: width / 2
+                        x: Network.ethernetEnabled ? parent.width - width - 4 : 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: Network.ethernetEnabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOutline
+
+                        Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 250 } }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                        onClicked: Network.toggleEthernet()
+                    }
+                }
+            }
+        }
+
         ProgressBar {
             Layout.fillWidth: true
             Layout.preferredHeight: Network.wifiScanning ? 4 : 0
