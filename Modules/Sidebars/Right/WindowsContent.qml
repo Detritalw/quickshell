@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
+import Quickshell.Io
 import qs.Common
 import qs.Widgets.common
 
@@ -12,34 +12,57 @@ WidgetPanel {
     closeAction: () => WidgetState.qsOpen = false
 
     property var windowList: []
-
-    function refreshWindowList() {
-        const toplevels = ToplevelManager.toplevels
-        const list = []
-        for (let i = 0; i < toplevels.count; i++) {
-            const tl = toplevels.objectAt(i)
-            if (!tl) continue
-            list.push({
-                toplevel: tl,
-                title: tl.title || "未知窗口",
-                appId: tl.appId || ""
-            })
-        }
-        root.windowList = list
-    }
-
     property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "windows"
+
     onIsActiveChanged: {
         if (isActive)
             root.refreshWindowList()
     }
 
-    Connections {
-        target: ToplevelManager
-        function onToplevelsChanged() {
-            if (root.isActive)
-                root.refreshWindowList()
+    function refreshWindowList() {
+        windowListProcess.running = true
+    }
+
+    Process {
+        id: windowListProcess
+        command: ["bash", "-c", `
+kdotool search "." 2>/dev/null | while read wid; do
+  name=$(kdotool getwindowname "$wid" 2>/dev/null)
+  cls=$(kdotool getwindowclassname "$wid" 2>/dev/null)
+  [ -n "$name" ] && echo "$wid|$name|$cls"
+done
+`]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const rawText = text.trim()
+                if (rawText.length === 0) {
+                    root.windowList = []
+                    return
+                }
+
+                const newList = []
+                const lines = rawText.split("\n")
+                for (let i = 0; i < lines.length; i++) {
+                    const parts = lines[i].split("|")
+                    if (parts.length >= 2 && parts[1].trim().length > 0) {
+                        newList.push({
+                            wid: parts[0] || "",
+                            title: parts[1] || "未知窗口",
+                            appId: parts[2] || ""
+                        })
+                    }
+                }
+                root.windowList = newList
+            }
         }
+    }
+
+    // Also refresh when window list might have changed (poll every 3s when open)
+    Timer {
+        interval: 3000
+        running: root.isActive
+        repeat: true
+        onTriggered: root.refreshWindowList()
     }
 
     Text {
@@ -73,8 +96,9 @@ WidgetPanel {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (modelData.toplevel)
-                        modelData.toplevel.activate()
+                    if (modelData.wid) {
+                        Quickshell.execDetached(["kdotool", "windowactivate", modelData.wid])
+                    }
                     WidgetState.qsOpen = false
                 }
             }
