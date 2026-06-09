@@ -143,7 +143,8 @@ WidgetPanel {
                 Layout.fillWidth: true
                 height: 20
 
-                property real gammaNormalized: (Wlsunset.gamma - Wlsunset.gammaLowerLimit) / (100 - Wlsunset.gammaLowerLimit)
+                // gamma: 100=off, 25=max warm. Progress: left=off, right=warm
+                property real nightLevel: 1.0 - (Wlsunset.gamma - Wlsunset.gammaLowerLimit) / (100 - Wlsunset.gammaLowerLimit)
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
@@ -154,17 +155,16 @@ WidgetPanel {
 
                     Rectangle {
                         height: parent.height
-                        width: parent.width * (1.0 - parent.parent.gammaNormalized)
+                        width: parent.width * parent.parent.nightLevel
                         radius: 3
                         color: Appearance.colors.colPrimary
-                        anchors.right: parent.right
                     }
                 }
 
                 Rectangle {
                     width: 20; height: 20; radius: 10
                     color: Appearance.colors.colPrimary
-                    x: Math.max(0, Math.min((1.0 - parent.gammaNormalized) * parent.width - width / 2, parent.width - width))
+                    x: Math.max(0, Math.min(parent.nightLevel * parent.width - width / 2, parent.width - width))
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -172,9 +172,9 @@ WidgetPanel {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     function updateGamma(mouse) {
-                        let v = 1.0 - (mouse.x / width);
+                        let v = mouse.x / width;
                         if (v < 0) v = 0; if (v > 1) v = 1;
-                        let gamma = v * (100 - Wlsunset.gammaLowerLimit) + Wlsunset.gammaLowerLimit;
+                        let gamma = (1.0 - v) * (100 - Wlsunset.gammaLowerLimit) + Wlsunset.gammaLowerLimit;
                         Wlsunset.setGamma(Math.round(gamma));
                     }
                     onPressed: (mouse) => updateGamma(mouse)
@@ -184,12 +184,16 @@ WidgetPanel {
 
             // Quick toggle to disable
             Rectangle {
+                id: nightOffBtn
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
                 radius: 18
-                color: Wlsunset.gamma === 100 ? Appearance.colors.colLayer2Active : "transparent"
+                color: Wlsunset.gamma === 100 ? Appearance.colors.colLayer2Active : (nightOffArea.pressed ? Appearance.colors.colLayer2Active : nightOffArea.containsMouse ? Appearance.colors.colLayer2Hover : "transparent")
                 border.width: 1
                 border.color: Appearance.colors.colOutlineVariant
+                z: 10
+
+                Behavior on color { ColorAnimation { duration: 140 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -199,9 +203,13 @@ WidgetPanel {
                 }
 
                 MouseArea {
+                    id: nightOffArea
                     anchors.fill: parent
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Wlsunset.setGamma(100)
+                    onClicked: {
+                        Wlsunset.setGamma(100);
+                    }
                 }
             }
         }
