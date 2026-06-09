@@ -25,7 +25,7 @@ Item {
     }
 
     function switchDesktopById(desktopId) {
-        switchDesktopProcess.command = ["gdbus", "call", "--session", "--dest", "org.kde.KWin", "--object-path", "/VirtualDesktopManager", "--method", "org.freedesktop.DBus.Properties.Set", "org.kde.KWin.VirtualDesktopManager", "current", "<" + desktopId + ">"]
+        switchDesktopProcess.command = ["gdbus", "call", "--session", "--dest", "org.kde.KWin", "--object-path", "/VirtualDesktopManager", "--method", "org.freedesktop.DBus.Properties.Set", "org.kde.KWin.VirtualDesktopManager", "current", "<'" + desktopId + "'>"]
         switchDesktopProcess.running = true
     }
 
