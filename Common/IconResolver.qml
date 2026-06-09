@@ -17,6 +17,12 @@ QtObject {
         "org.kde.dolphin": "dolphin"
     })
 
+    // 已知的文件系统路径（当 icon theme 查找失败时使用）
+    readonly property var knownPaths: ({
+        "konsole": "file:///usr/share/icons/char-white/apps/16/konsole.svg",
+        "dolphin": "file:///usr/share/icons/char-white/apps/16/dolphin.svg"
+    })
+
     // 从 reverse-DNS app_id 提取候选图标名列表
     function candidates(appId) {
         if (!appId || appId === "")
@@ -53,16 +59,24 @@ QtObject {
         return result
     }
 
-    // 解析图标路径，返回 Quickshell.iconPath 或 image:// 回退
+    // 解析图标路径
     function resolveIcon(appId) {
         if (!appId || appId === "")
             return "image://icon/application-x-executable"
 
         var cands = candidates(appId)
+
+        // 先尝试 Quickshell.iconPath（搜索系统 icon theme 链）
         for (var i = 0; i < cands.length; i++) {
             var resolved = Quickshell.iconPath(cands[i], "")
             if (resolved && resolved !== "")
                 return resolved
+        }
+
+        // 再尝试已知的文件系统路径
+        for (var j = 0; j < cands.length; j++) {
+            if (knownPaths[cands[j]])
+                return knownPaths[cands[j]]
         }
 
         return "image://icon/application-x-executable"
